@@ -26,12 +26,17 @@ function App() {
     getAccounts();
   }, [account]);
 
+  const calculateAmountInWei = () => {
+    const amount = document.getElementById('amount').value;
+    const unit = document.getElementById('unit').value;
+    return ethers.utils.parseUnits(amount, unit);
+  }
+
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
     const arbiter = document.getElementById('arbiter').value;
-    const value = ethers.BigNumber.from(document.getElementById('wei').value);
+    const value = calculateAmountInWei();
     const escrowContract = await deploy(signer, arbiter, beneficiary, value);
-
 
     const escrow = {
       address: escrowContract.address,
@@ -68,8 +73,15 @@ function App() {
         </label>
 
         <label>
-          Deposit Amount (in Wei)
-          <input type="text" id="wei" />
+          Deposit Amount
+          <div>
+            <input type="text" id="amount" />
+            <select id="unit">
+              <option value="ether">Ether</option>
+              <option value="gwei">Gwei</option>
+              <option value="wei">Wei</option>
+            </select>
+          </div>
         </label>
 
         <div

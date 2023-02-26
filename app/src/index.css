@@ -11,6 +11,7 @@ body {
   border: 2px dotted #1e1e1e;
   border-radius: 3px;
   background-color: #2d2d30;
+  min-width: 500px;
 }
 
 h1 {
@@ -29,9 +30,19 @@ label {
 }
 
 input[type="text"] {
+  margin: 5px;
   padding: 10px;
   font-size: 18px;
-  width: 500px;
+  border: 0px;
+  border-radius: 3px;
+  background-color: #eee;
+  min-width: 350px;
+}
+
+select {
+  margin: 5px;
+  padding: 10px;
+  font-size: 18px;
   border: 0px;
   border-radius: 3px;
   background-color: #eee;
