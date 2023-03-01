@@ -2,26 +2,43 @@
 pragma solidity 0.8.17;
 
 contract Escrow {
-	address public arbiter;
-	address public beneficiary;
-	address public depositor;
+    struct Contract {
+        uint id;
+		address depositor;
+        address arbiter;
+	    address beneficiary;
+        uint amount;
+        bool isApproved;
+    }
+    Contract[] public contracts;
 
-	bool public isApproved;
+	event Created(uint);
 
-	constructor(address _arbiter, address _beneficiary) payable {
-		arbiter = _arbiter;
-		beneficiary = _beneficiary;
-		depositor = msg.sender;
-	}
+    uint private idCounter = 0;
+    function create(address arbiter, address beneficiary) external payable {
+        contracts.push(Contract(idCounter, msg.sender, arbiter, beneficiary, msg.value, false));
+		emit Created(idCounter++);
+    }
 
 	event Approved(uint);
 
-	function approve() external {
-		require(msg.sender == arbiter);
-		uint balance = address(this).balance;
-		(bool sent, ) = payable(beneficiary).call{value: balance}("");
- 		require(sent, "Failed to send Ether");
-		emit Approved(balance);
-		isApproved = true;
+	function approve(uint id) external {
+		// since the idCounter starts at 0 and you cannot delete contracts,
+		// a contract's id will always match its position in the contracts array
+        require(id < contracts.length, "invalid ID");
+        Contract storage escrow = contracts[id];
+		require(msg.sender == escrow.arbiter, "you are not the arbiter");
+        require(!escrow.isApproved, "escrow contract has already been approved");
+
+		escrow.isApproved = true;
+
+		(bool success, ) = payable(escrow.beneficiary).call{ value: escrow.amount }("");
+ 		require(success, "failed to send Ether");
+
+		emit Approved(id);
+	}
+
+	function getContracts() external view returns (Contract[] memory) {
+		return contracts;
 	}
 }
