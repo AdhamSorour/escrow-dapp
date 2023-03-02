@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import Escrow from './artifacts/contracts/Escrow.sol/Escrow.json';
+import Escrow from './Escrow.json';
 
 export async function getContractInstance(signer) {
 	const address = window.localStorage.getItem('contract_address');

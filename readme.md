@@ -31,7 +31,7 @@ There are three top-level folders:
 1. Install the project dependencies with `npm install`
 2. Compile the solidity contract with `npx hardhat compile`
 
-The artifacts will be placed in `/app/artifacts`, which will make them available to the front-end. This path configuration can be found in the `hardhat.config.js` file.
+After compiling, the file `Escrow.json` in the generated artifacts folder will be copied into `app/src/` which will make it available to the front-end. The file contains important information required by the front-end like the contract's ABI and bytecode. To automate this process the `compile` task was overridden in the `hardhat.config.js` file.
 
 ### In the front-end app directory
 
