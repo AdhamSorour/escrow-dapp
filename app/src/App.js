@@ -9,18 +9,18 @@ import {
   createEscrow,
   approveEscrow
 } from './managerContractHandler';
+import WalletDialog from './WalletDialog';
 import SetupDialog from './SetupDialog';
 import Escrow from './Escrow';
 
-const provider = new ethers.providers.Web3Provider(window.ethereum);
 
 function App() {
-  const [isDialogShowing, setIsDialogShowing] = useState(false);
+  const [account, setAccount] = useState();
+  const [signer, setSigner] = useState();
+
   const [managerContract, setManagerContract] = useState();
   const [managerAddress, setManagerAddress] = useState();
   const [escrows, setEscrows] = useState([]);
-  const [account, setAccount] = useState();
-  const [signer, setSigner] = useState();
 
   const EscrowContract = (id, depositor, arbiter, beneficiary, value, isApproved) => {
     return {
@@ -48,61 +48,50 @@ function App() {
   }
 
 
-  window.ethereum.on('accountsChanged', (accounts) => {
-    setAccount(accounts[0]);
-  });
-
   useEffect(() => {
-    async function getAccounts() {
-      const accounts = await provider.send('eth_requestAccounts', []);
-      setAccount(accounts[0]);
-      setSigner(provider.getSigner());
-    }
+    window.ethereum?.request({method: 'eth_accounts'}).then((accounts) => {
+      setAccount(accounts[0])
+    });
 
-    getAccounts();
+    window.ethereum?.on('accountsChanged', (accounts) => {
+      setAccount(accounts[0]);
+    });
   }, []);
 
   useEffect(() => {
-    async function setContractInstance() {
-      const contractInstance = await getContractInstance(signer);
-      if (contractInstance) {
-        setManagerContract(contractInstance);
-      } else {
-        setIsDialogShowing(true);
-      }
+    if (account) {
+      setSigner(new ethers.providers.Web3Provider(window.ethereum).getSigner());
     }
+  }, [account]);
 
-    setContractInstance();
+  useEffect(() => {
+    getContractInstance(signer).then(setManagerContract);
   }, [signer]);
 
   useEffect(() => {
-    async function updateInfo() {
+    if (managerContract) {
       setManagerAddress(managerContract.address);
-      const newEscrows = await getEscrows(managerContract, EscrowContract);
-      setEscrows(newEscrows);
+      getEscrows(managerContract, EscrowContract).then(setEscrows);
     }
-
-    if (managerContract) updateInfo();
   }, [managerContract]);
+
 
 
   async function deploy() {
     const managerContract = await deployNewContract(signer);
     setManagerContract(managerContract);
-    setIsDialogShowing(false);
   }
 
   async function importExisting(address) {
     const managerContract = await importExistingContract(address, signer);
     setManagerContract(managerContract);
-    setIsDialogShowing(false);
   }
 
   async function useDefault() {
     const managerContract = await useDefaultContract(signer);
     setManagerContract(managerContract);
-    setIsDialogShowing(false);
   }
+
 
 
   const validateInputs = () => {
@@ -160,7 +149,7 @@ function App() {
               {managerAddress}
             </a>
           </p>
-          <div className="button" onClick={() => {setIsDialogShowing(true)}}>
+          <div className="button" onClick={() => {setManagerContract(null)}}>
             Switch Manager
           </div>
         </div>
@@ -209,8 +198,12 @@ function App() {
         </div>
       </div>
 
+      <WalletDialog
+        isShowing={!account}
+      />
+
       <SetupDialog
-        isShowing={isDialogShowing}
+        isShowing={!!account && !managerContract}
         deployNewContract={deploy}
         importExistingContract={importExisting}
         useDefaultContract={useDefault}
